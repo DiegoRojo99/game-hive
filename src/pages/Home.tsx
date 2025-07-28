@@ -2,9 +2,50 @@ import { Button } from "@/components/ui/button"
 import { GamingCard } from "@/components/ui/gaming-card"
 import { Badge } from "@/components/ui/badge"
 import { Gamepad2, Trophy, Search, Users, Calendar, TrendingUp } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
+import { Link, useSearchParams } from "react-router-dom"
+import { useEffect } from "react"
+import { toast } from "sonner"
+import { SteamAuth } from "@/utils/steamAuth"
 import heroImage from "@/assets/hero-gaming.jpg"
 
 export default function Home() {
+  const { isAuthenticated } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const loginStatus = searchParams.get('login');
+    const error = searchParams.get('error');
+    
+    if (loginStatus === 'success') {
+      toast.success('Successfully logged in with Steam!', {
+        description: 'You can now access your Steam library and achievements.'
+      });
+    }
+    
+    if (error) {
+      let errorMessage = 'Authentication failed';
+      switch (error) {
+        case 'invalid_response':
+          errorMessage = 'Invalid Steam authentication response';
+          break;
+        case 'no_steam_id':
+          errorMessage = 'Could not extract Steam ID from response';
+          break;
+        case 'no_profile':
+          errorMessage = 'Could not load Steam profile';
+          break;
+        case 'callback_error':
+          errorMessage = 'Error during authentication callback';
+          break;
+      }
+      
+      toast.error('Steam Login Failed', {
+        description: errorMessage
+      });
+    }
+  }, [searchParams]);
+
   const features = [
     {
       icon: Gamepad2,
@@ -70,12 +111,22 @@ export default function Home() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button variant="steam" size="lg" className="text-lg px-8 py-4">
-              Connect Steam Account
-            </Button>
-            <Button variant="gaming-outline" size="lg" className="text-lg px-8 py-4">
-              Explore Features
-            </Button>
+            {isAuthenticated ? (
+              <Link to="/steam-library">
+                <Button variant="steam" size="lg" className="text-lg px-8 py-4">
+                  View Steam Library
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="steam" size="lg" className="text-lg px-8 py-4" onClick={() => SteamAuth.login()}>
+                Connect Steam Account
+              </Button>
+            )}
+            <Link to="/games">
+              <Button variant="gaming-outline" size="lg" className="text-lg px-8 py-4">
+                Explore Features
+              </Button>
+            </Link>
           </div>
 
           <div className="flex flex-wrap justify-center gap-4">
@@ -146,9 +197,17 @@ export default function Home() {
             Join thousands of gamers who use PlayHive to track achievements, 
             discover new games, and optimize their gaming experience.
           </p>
-          <Button variant="steam" size="lg" className="text-lg px-8 py-4 animate-glow-pulse">
-            Get Started Now
-          </Button>
+          {isAuthenticated ? (
+            <Link to="/steam-library">
+              <Button variant="steam" size="lg" className="text-lg px-8 py-4 animate-glow-pulse">
+                Explore Your Library
+              </Button>
+            </Link>
+          ) : (
+            <Button variant="steam" size="lg" className="text-lg px-8 py-4 animate-glow-pulse" onClick={() => SteamAuth.login()}>
+              Get Started Now
+            </Button>
+          )}
         </div>
       </section>
     </div>

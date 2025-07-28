@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
-import { Gamepad2, Library, Trophy, Search, User } from "lucide-react"
+import { Gamepad2, Library, Trophy, Search } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
+import { SteamAuth } from "@/components/auth/SteamAuth"
 
 export function Navigation() {
   const location = useLocation()
@@ -42,10 +43,7 @@ export function Navigation() {
             })}
           </div>
 
-          <Button variant="steam" size="sm" className="flex items-center space-x-2">
-            <User className="h-4 w-4" />
-            <span>Login with Steam</span>
-          </Button>
+          <SteamAuth />
         </div>
       </div>
     </nav>
