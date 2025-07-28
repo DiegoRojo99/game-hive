@@ -3,7 +3,8 @@ import { GamingCard } from "@/components/ui/gaming-card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Trophy, Medal, Star, Clock, Target, Lock, User } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Trophy, Medal, Star, Clock, Target, Lock, User, Gamepad2 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
 import { useAllSteamAchievements } from "@/hooks/useSteam"
@@ -12,6 +13,7 @@ export default function Achievements() {
   const { isAuthenticated } = useAuth();
   const { data: achievements, isLoading, error } = useAllSteamAchievements();
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedGame, setSelectedGame] = useState("all");
 
   const formatUnlockDate = (unlocktime: number) => {
     if (!unlocktime) return '';
@@ -60,6 +62,13 @@ export default function Achievements() {
 
   const achievementList = achievements || [];
   
+  // Extract unique games for the filter dropdown
+  const uniqueGames = Array.from(
+    new Map(
+      achievementList.map(a => [a.appid, { appid: a.appid, gameName: a.gameName }])
+    ).values()
+  ).sort((a, b) => a.gameName.localeCompare(b.gameName));
+  
   const filters = [
     { id: "all", label: "All Achievements", count: achievementList.length },
     { id: "unlocked", label: "Unlocked", count: achievementList.filter(a => a.achieved).length },
@@ -72,6 +81,12 @@ export default function Achievements() {
 
   const filteredAchievements = achievementList.filter(achievement => {
     const rarity = getRarityFromPercentage(achievement.rarity);
+    
+    // Filter by game first
+    const gameMatches = selectedGame === "all" || achievement.appid.toString() === selectedGame;
+    if (!gameMatches) return false;
+    
+    // Then filter by achievement status/rarity
     switch (selectedFilter) {
       case "unlocked": return achievement.achieved
       case "locked": return !achievement.achieved
@@ -92,10 +107,15 @@ export default function Achievements() {
   }
 
   // Calculate stats - treat each achievement as having 1 "point" since Steam doesn't provide point values
-  const unlockedAchievements = achievementList.filter(a => a.achieved);
-  const totalAchievements = achievementList.length;
+  // If a game is selected, calculate stats for that game only
+  const relevantAchievements = selectedGame === "all" 
+    ? achievementList 
+    : achievementList.filter(a => a.appid.toString() === selectedGame);
+    
+  const unlockedAchievements = relevantAchievements.filter(a => a.achieved);
+  const totalAchievements = relevantAchievements.length;
   const completionRate = totalAchievements > 0 ? Math.round((unlockedAchievements.length / totalAchievements) * 100) : 0;
-  const legendaryCount = achievementList.filter(a => getRarityFromPercentage(a.rarity) === "Legendary").length;
+  const legendaryCount = relevantAchievements.filter(a => getRarityFromPercentage(a.rarity) === "Legendary").length;
 
   return (
     <div className="min-h-screen bg-gradient-hero py-8">
@@ -108,6 +128,16 @@ export default function Achievements() {
           <p className="text-foreground/70 text-lg">
             Track your gaming accomplishments and unlock new challenges.
           </p>
+          {selectedGame !== "all" && (
+            <div className="mt-2 flex items-center gap-2">
+              <Gamepad2 className="h-4 w-4 text-gaming-primary" />
+              <span className="text-foreground/60">
+                Viewing achievements for: <span className="text-gaming-primary font-medium">
+                  {uniqueGames.find(g => g.appid.toString() === selectedGame)?.gameName || "Unknown Game"}
+                </span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Stats Overview */}
@@ -148,21 +178,81 @@ export default function Achievements() {
           </GamingCard>
         )}
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          {filters.map((filter) => (
-            <Button
-              key={filter.id}
-              variant={selectedFilter === filter.id ? "gaming" : "gaming-ghost"}
-              onClick={() => setSelectedFilter(filter.id)}
-              className="flex items-center gap-2"
-            >
-              {filter.label}
-              <Badge variant="secondary" className="bg-gaming-card/50 text-xs">
-                {filter.count}
-              </Badge>
-            </Button>
-          ))}
+        {/* Game Filter and Filters */}
+        <div className="space-y-4 mb-8">
+          {/* Game Filter Dropdown */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-gaming-primary" />
+              <span className="text-foreground font-medium">Filter by Game:</span>
+            </div>
+            <Select value={selectedGame} onValueChange={setSelectedGame}>
+              <SelectTrigger className="w-64 bg-gaming-card border-gaming-border">
+                <SelectValue placeholder="Select a game" />
+              </SelectTrigger>
+              <SelectContent className="bg-gaming-card border-gaming-border">
+                <SelectItem value="all" className="text-foreground hover:bg-gaming-border">
+                  All Games ({uniqueGames.length} games)
+                </SelectItem>
+                {uniqueGames.map((game) => {
+                  const gameAchievements = achievementList.filter(a => a.appid === game.appid);
+                  const unlockedCount = gameAchievements.filter(a => a.achieved).length;
+                  return (
+                    <SelectItem 
+                      key={game.appid} 
+                      value={game.appid.toString()}
+                      className="text-foreground hover:bg-gaming-border"
+                    >
+                      {game.gameName} ({unlockedCount}/{gameAchievements.length})
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Achievement Status Filters */}
+          <div className="flex flex-wrap gap-2">
+            {filters.map((filter) => {
+              // Recalculate filter counts based on selected game
+              const gameFilteredAchievements = selectedGame === "all" 
+                ? achievementList 
+                : achievementList.filter(a => a.appid.toString() === selectedGame);
+              
+              let count = 0;
+              switch (filter.id) {
+                case "all":
+                  count = gameFilteredAchievements.length;
+                  break;
+                case "unlocked":
+                  count = gameFilteredAchievements.filter(a => a.achieved).length;
+                  break;
+                case "locked":
+                  count = gameFilteredAchievements.filter(a => !a.achieved).length;
+                  break;
+                case "rare":
+                  count = gameFilteredAchievements.filter(a => {
+                    const rarity = getRarityFromPercentage(a.rarity);
+                    return ["Rare", "Epic", "Legendary"].includes(rarity);
+                  }).length;
+                  break;
+              }
+              
+              return (
+                <Button
+                  key={filter.id}
+                  variant={selectedFilter === filter.id ? "gaming" : "gaming-ghost"}
+                  onClick={() => setSelectedFilter(filter.id)}
+                  className="flex items-center gap-2"
+                >
+                  {filter.label}
+                  <Badge variant="secondary" className="bg-gaming-card/50 text-xs">
+                    {count}
+                  </Badge>
+                </Button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Achievements Grid */}
