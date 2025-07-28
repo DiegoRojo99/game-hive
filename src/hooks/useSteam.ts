@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
-import { SteamAPI, SteamGame, SteamAchievement } from '@/services/steamApi';
+import { SteamAPI, SteamGame, SteamAchievement, GameAchievement } from '@/services/steamApi';
 
 interface SteamPlayerStats {
   steamID: string;
@@ -42,6 +42,24 @@ export const useSteamAchievements = (appId: number) => {
     enabled: isAuthenticated && !!user && !!appId,
     staleTime: 15 * 60 * 1000, // 15 minutes
     gcTime: 30 * 60 * 1000, // 30 minutes
+  });
+};
+
+export const useAllSteamAchievements = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  return useQuery({
+    queryKey: ['allSteamAchievements', user?.steamid],
+    queryFn: async (): Promise<GameAchievement[]> => {
+      if (!isAuthenticated || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      return await SteamAPI.getAllPlayerAchievements(user.steamid);
+    },
+    enabled: isAuthenticated && !!user,
+    staleTime: 30 * 60 * 1000, // 30 minutes (achievements don't change often)
+    gcTime: 60 * 60 * 1000, // 1 hour
   });
 };
 

@@ -2,97 +2,83 @@ import { Button } from "@/components/ui/button"
 import { GamingCard } from "@/components/ui/gaming-card"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
-import { Trophy, Medal, Star, Clock, Target, Lock } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Trophy, Medal, Star, Clock, Target, Lock, User } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { useAllSteamAchievements } from "@/hooks/useSteam"
 
 export default function Achievements() {
-  const [selectedFilter, setSelectedFilter] = useState("all")
+  const { isAuthenticated } = useAuth();
+  const { data: achievements, isLoading, error } = useAllSteamAchievements();
+  const [selectedFilter, setSelectedFilter] = useState("all");
 
-  // Mock achievement data
-  const achievements = [
-    {
-      id: 1,
-      name: "First Steps",
-      description: "Complete the tutorial",
-      game: "Cyberpunk 2077",
-      points: 10,
-      rarity: "Common",
-      unlocked: true,
-      unlockedDate: "2024-01-15",
-      icon: "🎯"
-    },
-    {
-      id: 2,
-      name: "Completionist",
-      description: "Unlock all achievements in a single game",
-      game: "Hades",
-      points: 100,
-      rarity: "Legendary",
-      unlocked: true,
-      unlockedDate: "2024-01-20",
-      icon: "👑"
-    },
-    {
-      id: 3,
-      name: "Speed Demon",
-      description: "Complete a race in under 2 minutes",
-      game: "Rocket League",
-      points: 25,
-      rarity: "Rare",
-      unlocked: false,
-      progress: 85,
-      icon: "⚡"
-    },
-    {
-      id: 4,
-      name: "Master Collector",
-      description: "Collect all rare items",
-      game: "The Witcher 3",
-      points: 50,
-      rarity: "Epic",
-      unlocked: true,
-      unlockedDate: "2024-01-10",
-      icon: "💎"
-    },
-    {
-      id: 5,
-      name: "Night Owl",
-      description: "Play for 5 consecutive hours",
-      game: "Stardew Valley",
-      points: 15,
-      rarity: "Uncommon",
-      unlocked: false,
-      progress: 60,
-      icon: "🌙"
-    },
-    {
-      id: 6,
-      name: "Social Butterfly",
-      description: "Play with 10 different friends",
-      game: "Among Us",
-      points: 30,
-      rarity: "Rare",
-      unlocked: false,
-      progress: 70,
-      icon: "🦋"
-    }
-  ]
+  const formatUnlockDate = (unlocktime: number) => {
+    if (!unlocktime) return '';
+    return new Date(unlocktime * 1000).toLocaleDateString();
+  };
 
+  const getRarityFromPercentage = (rarity?: number) => {
+    if (!rarity) return "Common";
+    if (rarity >= 50) return "Common";
+    if (rarity >= 25) return "Uncommon";
+    if (rarity >= 10) return "Rare";
+    if (rarity >= 5) return "Epic";
+    return "Legendary";
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-hero py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <User className="h-16 w-16 text-foreground/30 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-foreground mb-4">Login Required</h2>
+            <p className="text-foreground/60 mb-6">
+              Please login with Steam to view your achievements.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-hero py-8">
+        <div className="container mx-auto px-4">
+          <div className="text-center py-16">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Error Loading Achievements</h2>
+            <p className="text-foreground/60">
+              There was an error loading your Steam achievements. Please try again later.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const achievementList = achievements || [];
+  
   const filters = [
-    { id: "all", label: "All Achievements", count: achievements.length },
-    { id: "unlocked", label: "Unlocked", count: achievements.filter(a => a.unlocked).length },
-    { id: "locked", label: "Locked", count: achievements.filter(a => !a.unlocked).length },
-    { id: "rare", label: "Rare+", count: achievements.filter(a => ["Rare", "Epic", "Legendary"].includes(a.rarity)).length }
-  ]
+    { id: "all", label: "All Achievements", count: achievementList.length },
+    { id: "unlocked", label: "Unlocked", count: achievementList.filter(a => a.achieved).length },
+    { id: "locked", label: "Locked", count: achievementList.filter(a => !a.achieved).length },
+    { id: "rare", label: "Rare+", count: achievementList.filter(a => {
+      const rarity = getRarityFromPercentage(a.rarity);
+      return ["Rare", "Epic", "Legendary"].includes(rarity);
+    }).length }
+  ];
 
-  const filteredAchievements = achievements.filter(achievement => {
+  const filteredAchievements = achievementList.filter(achievement => {
+    const rarity = getRarityFromPercentage(achievement.rarity);
     switch (selectedFilter) {
-      case "unlocked": return achievement.unlocked
-      case "locked": return !achievement.unlocked
-      case "rare": return ["Rare", "Epic", "Legendary"].includes(achievement.rarity)
+      case "unlocked": return achievement.achieved
+      case "locked": return !achievement.achieved
+      case "rare": return ["Rare", "Epic", "Legendary"].includes(rarity)
       default: return true
     }
-  })
+  });
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -105,9 +91,11 @@ export default function Achievements() {
     }
   }
 
-  const totalPoints = achievements.filter(a => a.unlocked).reduce((sum, a) => sum + a.points, 0)
-  const maxPoints = achievements.reduce((sum, a) => sum + a.points, 0)
-  const completionRate = Math.round((achievements.filter(a => a.unlocked).length / achievements.length) * 100)
+  // Calculate stats - treat each achievement as having 1 "point" since Steam doesn't provide point values
+  const unlockedAchievements = achievementList.filter(a => a.achieved);
+  const totalAchievements = achievementList.length;
+  const completionRate = totalAchievements > 0 ? Math.round((unlockedAchievements.length / totalAchievements) * 100) : 0;
+  const legendaryCount = achievementList.filter(a => getRarityFromPercentage(a.rarity) === "Legendary").length;
 
   return (
     <div className="min-h-screen bg-gradient-hero py-8">
@@ -126,14 +114,14 @@ export default function Achievements() {
         <div className="grid md:grid-cols-4 gap-6 mb-8">
           <GamingCard className="text-center">
             <Trophy className="h-8 w-8 text-gaming-accent mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground">{totalPoints}</div>
-            <div className="text-foreground/60 text-sm">Achievement Points</div>
+            <div className="text-2xl font-bold text-foreground">{unlockedAchievements.length}</div>
+            <div className="text-foreground/60 text-sm">Unlocked Achievements</div>
           </GamingCard>
           
           <GamingCard className="text-center">
             <Medal className="h-8 w-8 text-gaming-primary mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground">{achievements.filter(a => a.unlocked).length}</div>
-            <div className="text-foreground/60 text-sm">Unlocked</div>
+            <div className="text-2xl font-bold text-foreground">{totalAchievements}</div>
+            <div className="text-foreground/60 text-sm">Total Available</div>
           </GamingCard>
           
           <GamingCard className="text-center">
@@ -144,19 +132,21 @@ export default function Achievements() {
           
           <GamingCard className="text-center">
             <Star className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-            <div className="text-2xl font-bold text-foreground">{achievements.filter(a => a.rarity === "Legendary").length}</div>
+            <div className="text-2xl font-bold text-foreground">{legendaryCount}</div>
             <div className="text-foreground/60 text-sm">Legendary</div>
           </GamingCard>
         </div>
 
         {/* Progress Bar */}
-        <GamingCard className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Overall Progress</h2>
-            <span className="text-foreground/70">{totalPoints}/{maxPoints} points</span>
-          </div>
-          <Progress value={(totalPoints / maxPoints) * 100} className="h-3" />
-        </GamingCard>
+        {totalAchievements > 0 && (
+          <GamingCard className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Overall Progress</h2>
+              <span className="text-foreground/70">{unlockedAchievements.length}/{totalAchievements} achievements</span>
+            </div>
+            <Progress value={completionRate} className="h-3" />
+          </GamingCard>
+        )}
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-8">
@@ -177,63 +167,110 @@ export default function Achievements() {
 
         {/* Achievements Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAchievements.map((achievement) => (
-            <GamingCard 
-              key={achievement.id} 
-              className={`transition-all duration-300 ${achievement.unlocked ? 'border-gaming-primary/30' : 'opacity-75'}`}
-            >
-              <div className="flex items-start gap-4">
-                <div className={`text-3xl p-3 rounded-lg ${achievement.unlocked ? 'bg-gaming-primary/20' : 'bg-gaming-card/50 grayscale'}`}>
-                  {achievement.unlocked ? achievement.icon : <Lock className="h-6 w-6 text-foreground/50" />}
+          {isLoading ? (
+            // Loading skeletons
+            Array.from({ length: 6 }).map((_, index) => (
+              <GamingCard key={index} className="overflow-hidden">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="w-12 h-12 rounded-lg" />
+                  <div className="flex-1 space-y-3">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-1/2" />
+                    <div className="flex items-center justify-between">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-5 w-16" />
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between mb-2">
-                    <h3 className={`font-semibold ${achievement.unlocked ? 'text-foreground' : 'text-foreground/60'}`}>
-                      {achievement.name}
-                    </h3>
-                    <div className="flex items-center gap-1 text-gaming-accent">
-                      <Trophy className="h-4 w-4" />
-                      <span className="text-sm font-medium">{achievement.points}</span>
-                    </div>
-                  </div>
-                  
-                  <p className="text-foreground/70 text-sm mb-3">
-                    {achievement.description}
-                  </p>
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-foreground/60 text-sm">{achievement.game}</span>
-                    <Badge className={getRarityColor(achievement.rarity)} variant="secondary">
-                      {achievement.rarity}
-                    </Badge>
-                  </div>
-                  
-                  {achievement.unlocked ? (
-                    <div className="flex items-center gap-2 text-sm text-gaming-accent">
-                      <Clock className="h-4 w-4" />
-                      <span>Unlocked {achievement.unlockedDate}</span>
-                    </div>
-                  ) : achievement.progress && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-foreground/60">Progress</span>
-                        <span className="text-foreground/70">{achievement.progress}%</span>
+              </GamingCard>
+            ))
+          ) : (
+            filteredAchievements.map((achievement, index) => {
+              const rarity = getRarityFromPercentage(achievement.rarity);
+              return (
+                <GamingCard 
+                  key={`${achievement.appid}-${achievement.apiname}-${index}`}
+                  className={`transition-all duration-300 ${achievement.achieved ? 'border-gaming-primary/30' : 'opacity-75'}`}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${achievement.achieved ? 'bg-gaming-primary/20' : 'bg-gaming-card/50 grayscale'}`}>
+                      {achievement.achieved && achievement.icon ? (
+                        <img 
+                          src={achievement.icon} 
+                          alt={achievement.name || achievement.apiname}
+                          className="w-8 h-8"
+                          onError={(e) => {
+                            // Fallback to trophy icon if image fails
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : achievement.iconGray ? (
+                        <img 
+                          src={achievement.iconGray} 
+                          alt={achievement.name || achievement.apiname}
+                          className="w-8 h-8 grayscale"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <div className={`${(achievement.achieved && achievement.icon) || achievement.iconGray ? 'hidden' : ''}`}>
+                        {achievement.achieved ? (
+                          <Trophy className="h-6 w-6 text-gaming-accent" />
+                        ) : (
+                          <Lock className="h-6 w-6 text-foreground/50" />
+                        )}
                       </div>
-                      <Progress value={achievement.progress} className="h-2" />
                     </div>
-                  )}
-                </div>
-              </div>
-            </GamingCard>
-          ))}
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className={`font-semibold text-sm ${achievement.achieved ? 'text-foreground' : 'text-foreground/60'}`}>
+                          {achievement.name || achievement.apiname}
+                        </h3>
+                      </div>
+                      
+                      <p className="text-foreground/70 text-xs mb-3 line-clamp-2">
+                        {achievement.description || 'No description available'}
+                      </p>
+                      
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-foreground/60 text-xs truncate">{achievement.gameName}</span>
+                        <Badge className={getRarityColor(rarity)} variant="secondary">
+                          {rarity}
+                        </Badge>
+                      </div>
+                      
+                      {achievement.achieved && achievement.unlocktime > 0 && (
+                        <div className="flex items-center gap-2 text-xs text-gaming-accent">
+                          <Clock className="h-3 w-3" />
+                          <span>Unlocked {formatUnlockDate(achievement.unlocktime)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </GamingCard>
+              );
+            })
+          )}
         </div>
 
-        {filteredAchievements.length === 0 && (
+        {filteredAchievements.length === 0 && !isLoading && (
           <div className="text-center py-12">
             <Trophy className="h-16 w-16 text-foreground/30 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No achievements found</h3>
-            <p className="text-foreground/60">Try adjusting your filters to see more achievements.</p>
+            <h3 className="text-xl font-semibold text-foreground mb-2">
+              {totalAchievements === 0 ? 'No achievements found' : 'No achievements match your filter'}
+            </h3>
+            <p className="text-foreground/60">
+              {totalAchievements === 0 
+                ? 'Your Steam games may not have community achievements, or your profile may be private.' 
+                : 'Try adjusting your filters to see more achievements.'}
+            </p>
           </div>
         )}
       </div>

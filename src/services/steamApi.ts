@@ -27,6 +27,14 @@ export interface SteamAchievement {
   description?: string;
 }
 
+export interface GameAchievement extends SteamAchievement {
+  appid: number;
+  gameName: string;
+  icon?: string;
+  iconGray?: string;
+  rarity?: number; // percentage of players who have this achievement
+}
+
 export interface SteamPlayerSummary {
   steamid: string;
   communityvisibilitystate: number;
@@ -142,17 +150,99 @@ export class SteamAPI {
       return data.playerstats?.achievements || [];
     } catch (error) {
       console.error('Error fetching player achievements:', error);
-      // Return mock data as fallback
-      return [
-        {
-          apiname: "FIRST_STEPS",
-          achieved: 1,
-          unlocktime: 1640995200,
-          name: "First Steps",
-          description: "Complete the prologue"
-        }
-      ];
+      // Return empty array as fallback
+      return [];
     }
+  }
+
+  static async getAllPlayerAchievements(steamId: string): Promise<GameAchievement[]> {
+    try {
+      // First get the user's games
+      const games = await this.getOwnedGames(steamId);
+      console.log(`Fetching achievements for ${games.length} games...`);
+      
+      const allAchievements: GameAchievement[] = [];
+      
+      // Limit to games with community stats to avoid rate limiting
+      const gamesWithStats = games.filter(game => game.has_community_visible_stats).slice(0, 10);
+      console.log(`Processing ${gamesWithStats.length} games with community stats...`);
+      
+      // Process games in batches to avoid overwhelming the API
+      for (const game of gamesWithStats) {
+        try {
+          // Get achievements for this game
+          const achievements = await this.getPlayerAchievements(steamId, game.appid);
+          
+          // Get game schema for achievement details
+          const schema = await this.getGameSchema(game.appid);
+          const gameAchievements = schema?.game?.availableGameStats?.achievements || [];
+          
+          // Combine achievement data with game info
+          const enhancedAchievements = achievements.map(achievement => {
+            const schemaAchievement = gameAchievements.find((a: any) => a.name === achievement.apiname);
+            return {
+              ...achievement,
+              appid: game.appid,
+              gameName: game.name,
+              name: schemaAchievement?.displayName || achievement.name || achievement.apiname,
+              description: schemaAchievement?.description || achievement.description || '',
+              icon: schemaAchievement?.icon,
+              iconGray: schemaAchievement?.iconGray,
+            } as GameAchievement;
+          });
+          
+          allAchievements.push(...enhancedAchievements);
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (error) {
+          console.error(`Error fetching achievements for ${game.name}:`, error);
+          // Continue with other games
+        }
+      }
+      
+      console.log(`Found ${allAchievements.length} total achievements`);
+      return allAchievements;
+    } catch (error) {
+      console.error('Error fetching all player achievements:', error);
+      // Return mock data as fallback
+      return this.getMockAchievements();
+    }
+  }
+
+  private static getMockAchievements(): GameAchievement[] {
+    return [
+      {
+        apiname: "FIRST_STEPS",
+        achieved: 1,
+        unlocktime: 1640995200,
+        name: "First Steps",
+        description: "Complete the tutorial",
+        appid: 1091500,
+        gameName: "Cyberpunk 2077",
+        icon: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/1091500/achievement_icon.jpg"
+      },
+      {
+        apiname: "COMPLETIONIST",
+        achieved: 1,
+        unlocktime: 1641081600,
+        name: "Completionist",
+        description: "Unlock all achievements in a single game",
+        appid: 1145360,
+        gameName: "Hades",
+        icon: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/1145360/achievement_icon.jpg"
+      },
+      {
+        apiname: "SPEED_DEMON",
+        achieved: 0,
+        unlocktime: 0,
+        name: "Speed Demon",
+        description: "Complete a race in under 2 minutes",
+        appid: 252950,
+        gameName: "Rocket League",
+        iconGray: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/252950/achievement_icon_gray.jpg"
+      }
+    ];
   }
 
   static async getGameSchema(appId: number): Promise<any> {
