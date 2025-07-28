@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Gamepad2, Library, Trophy, Search } from "lucide-react"
+import { Gamepad2, Library, Trophy } from "lucide-react"
 import { Link, useLocation } from "react-router-dom"
 import { SteamAuth } from "@/components/auth/SteamAuth"
 
@@ -8,9 +8,8 @@ export function Navigation() {
 
   const navItems = [
     { path: "/", label: "Home", icon: Gamepad2 },
-    { path: "/games", label: "Games", icon: Library },
+    { path: "/steam-library", label: "Steam Library", icon: Library },
     { path: "/achievements", label: "Achievements", icon: Trophy },
-    { path: "/search", label: "Search", icon: Search },
   ]
 
   return (
