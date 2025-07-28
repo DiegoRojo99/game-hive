@@ -158,14 +158,11 @@ export class SteamAPI {
   static async getAllPlayerAchievements(steamId: string): Promise<GameAchievement[]> {
     try {
       // First get the user's games
-      const games = await this.getOwnedGames(steamId);
-      console.log(`Fetching achievements for ${games.length} games...`);
-      
+      const games = await this.getOwnedGames(steamId);      
       const allAchievements: GameAchievement[] = [];
       
       // Limit to games with community stats to avoid rate limiting
       const gamesWithStats = games.filter(game => game.has_community_visible_stats).slice(0, 10);
-      console.log(`Processing ${gamesWithStats.length} games with community stats...`);
       
       // Process games in batches to avoid overwhelming the API
       for (const game of gamesWithStats) {
@@ -201,7 +198,6 @@ export class SteamAPI {
         }
       }
       
-      console.log(`Found ${allAchievements.length} total achievements`);
       return allAchievements;
     } catch (error) {
       console.error('Error fetching all player achievements:', error);
