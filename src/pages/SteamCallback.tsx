@@ -32,8 +32,6 @@ export default function SteamCallback() {
           return;
         }
 
-        console.log('Steam ID found:', steamId);
-
         // Fetch user profile from Steam API
         const playerSummaries = await SteamAPI.getPlayerSummaries([steamId]);
         

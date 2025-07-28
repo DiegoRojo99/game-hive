@@ -19,15 +19,12 @@ export default defineConfig(({ mode }) => {
           rewrite: (path) => {
             const apiKey = env.VITE_STEAM_API_KEY;
             const newPath = path.replace('/api/steam', '');
-            console.log('Rewriting Steam API path:', `${newPath}${newPath.includes('?') ? '&' : '?'}key=${apiKey ? '[REDACTED]' : 'MISSING'}`);
             return `${newPath}${newPath.includes('?') ? '&' : '?'}key=${apiKey}`;
           },
           configure: (proxy, options) => {
             proxy.on('proxyReq', (proxyReq, req, res) => {
-              console.log('Proxying Steam API request:', req.url);
             });
             proxy.on('proxyRes', (proxyRes, req, res) => {
-              console.log('Steam API response status:', proxyRes.statusCode);
             });
           }
         }

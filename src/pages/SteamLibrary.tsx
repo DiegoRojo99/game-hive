@@ -17,8 +17,9 @@ export default function SteamLibrary() {
     return `${hours.toFixed(1)}h`;
   };
 
-  const getGameImageUrl = (appId: number, imageHash: string) => {
-    return SteamAPI.getGameImageUrl(appId, imageHash, 'icon');
+  const getGameImageUrl = (appId: number, imageHash?: string) => {
+    // Use the SteamAPI helper to get the best image for library display
+    return SteamAPI.getGameImageUrl(appId, imageHash, 'header');
   };
 
   if (!isAuthenticated) {
@@ -110,19 +111,18 @@ export default function SteamLibrary() {
             steamGames?.map((game) => (
               <GamingCard key={game.appid} className="overflow-hidden group">
                 <div className="relative mb-4">
-                  {game.img_logo_url ? (
-                    <img
-                      src={getGameImageUrl(game.appid, game.img_logo_url)}
-                      alt={game.name}
-                      className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = 'none';
-                        target.nextElementSibling?.classList.remove('hidden');
-                      }}
-                    />
-                  ) : null}
-                  <div className={`w-full h-48 bg-gaming-card/50 rounded-lg flex items-center justify-center ${game.img_logo_url ? 'hidden' : ''}`}>
+                  <img
+                    src={getGameImageUrl(game.appid, game.img_icon_url)}
+                    alt={game.name}
+                    className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      // Hide image and show placeholder if header image fails
+                      target.style.display = 'none';
+                      target.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="w-full h-48 bg-gaming-card/50 rounded-lg flex items-center justify-center hidden">
                     <span className="text-foreground/50 text-6xl">🎮</span>
                   </div>
                   {game.playtime_forever > 0 && (
