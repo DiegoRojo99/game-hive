@@ -61,15 +61,20 @@ export class SteamAPI {
   private static async fetchWithProxy(endpoint: string): Promise<any> {
     if (USE_PROXY) {
       // Use your backend proxy
-      const url = `${PROXY_BASE}${endpoint}`;      
+      const url = `${PROXY_BASE}${endpoint}`;
+      console.log('Fetching Steam API via proxy:', url);
+      
       const response = await fetch(url);
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('Steam API error response:', errorText);
-        throw new Error(`Steam API request failed: ${response.statusText}`);
+        console.error('Steam API error response:', response.status, response.statusText, errorText);
+        throw new Error(`Steam API request failed: ${response.status} ${response.statusText} - ${errorText}`);
       }
-      return response.json();
+      
+      const data = await response.json();
+      console.log('Steam API response received:', data);
+      return data;
     } 
     else {
       // Direct API call (will fail due to CORS in browser)

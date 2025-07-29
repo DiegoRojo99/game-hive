@@ -16,6 +16,7 @@ export default function Home() {
   useEffect(() => {
     const loginStatus = searchParams.get('login');
     const error = searchParams.get('error');
+    const details = searchParams.get('details');
     
     if (loginStatus === 'success') {
       toast.success('Successfully logged in with Steam!', {
@@ -38,10 +39,19 @@ export default function Home() {
         case 'callback_error':
           errorMessage = 'Error during authentication callback';
           break;
+        case 'api_key_error':
+          errorMessage = 'Steam API key configuration error';
+          break;
+        case 'network_error':
+          errorMessage = 'Network error connecting to Steam API';
+          break;
+        case 'steam_api_error':
+          errorMessage = 'Steam API returned mock/invalid data';
+          break;
       }
       
       toast.error('Steam Login Failed', {
-        description: errorMessage
+        description: details ? `${errorMessage}: ${decodeURIComponent(details)}` : errorMessage
       });
     }
   }, [searchParams]);

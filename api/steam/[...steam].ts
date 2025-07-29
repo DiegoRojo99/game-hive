@@ -11,16 +11,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Get API key from environment
   const API_KEY = process.env.VITE_STEAM_API_KEY;
   
   if (!API_KEY) {
+    console.error('VITE_STEAM_API_KEY not found in environment variables');
     return res.status(500).json({ error: 'Steam API key not configured' });
   }
 
   // Extract the Steam API endpoint from the request path
   // URL will be like: /api/steam/ISteamUser/GetPlayerSummaries/v0002/?steamids=123456
   const { steam, ...params } = req.query;
-  const endpoint = Array.isArray(steam) ? steam.join('/') : steam;
+  
+  // Handle the dynamic route parameter
+  let endpoint = '';
+  if (Array.isArray(steam)) {
+    endpoint = steam.join('/');
+  } else if (typeof steam === 'string') {
+    endpoint = steam;
+  }
+  
+  console.log('Raw query:', req.query);
+  console.log('Extracted endpoint:', endpoint);
+  console.log('Params:', params);
   
   if (!endpoint) {
     return res.status(400).json({ error: 'No Steam API endpoint specified' });

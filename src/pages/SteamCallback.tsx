@@ -83,7 +83,20 @@ export default function SteamCallback() {
         
       } catch (error) {
         console.error('Error handling Steam callback:', error);
-        navigate('/?error=callback_error');
+        
+        // Provide more specific error information
+        let errorMessage = 'callback_error';
+        if (error instanceof Error) {
+          if (error.message.includes('Steam API key')) {
+            errorMessage = 'api_key_error';
+          } else if (error.message.includes('fetch')) {
+            errorMessage = 'network_error';
+          } else if (error.message.includes('Steam player data')) {
+            errorMessage = 'steam_api_error';
+          }
+        }
+        
+        navigate(`/?error=${errorMessage}&details=${encodeURIComponent(error instanceof Error ? error.message : 'Unknown error')}`);
       }
     };
 
