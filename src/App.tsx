@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import Home from "./pages/Home";
 import Achievements from "./pages/Achievements";
 import SteamLibrary from "./pages/SteamLibrary";
+import GameDetails from "./pages/GameDetails";
 import SteamCallback from "./pages/SteamCallback";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Home />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/steam-library" element={<SteamLibrary />} />
+            <Route path="/game/:appid" element={<GameDetails />} />
             <Route path="/auth/steam/callback" element={<SteamCallback />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

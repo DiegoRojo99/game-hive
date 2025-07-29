@@ -9,6 +9,7 @@ import { useSteamGames } from "@/hooks/useSteam";
 import { useAuth } from "@/contexts/AuthContext";
 import { SteamAPI } from "@/services/steamApi";
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 
 export default function SteamLibrary() {
   const { isAuthenticated } = useAuth();
@@ -199,81 +200,78 @@ export default function SteamLibrary() {
             ))
           ) : (
             sortedGames?.map((game) => (
-              <GamingCard key={game.appid} className="overflow-hidden group">
-                <div className="relative mb-4">
-                  <img
-                    src={getGameImageUrl(game.appid, game.img_icon_url)}
-                    alt={game.name}
-                    className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      // Hide image and show placeholder if header image fails
-                      target.style.display = 'none';
-                      target.nextElementSibling?.classList.remove('hidden');
-                    }}
-                  />
-                  <div className="w-full h-48 bg-gaming-card/50 rounded-lg flex items-center justify-center hidden">
-                    <span className="text-foreground/50 text-6xl">🎮</span>
-                  </div>
-                  <div className="absolute top-2 right-2 space-y-1">
-                    {game.playtime_2weeks && game.playtime_2weeks > 0 && (
-                      <Badge className="bg-gaming-primary text-white text-xs">
-                        Recently Played
-                      </Badge>
-                    )}
-                    {game.playtime_forever > 0 && (
-                      <Badge className="bg-gaming-accent text-gaming-dark text-xs">
-                        {formatPlaytime(game.playtime_forever)}
-                      </Badge>
-                    )}
-                    {game.playtime_forever === 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        Never Played
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg text-foreground group-hover:text-gaming-primary transition-colors">
-                        {game.name}
-                      </h3>
-                      <p className="text-foreground/60 text-sm">Steam Game</p>
+              <Link key={game.appid} to={`/game/${game.appid}`}>
+                <GamingCard className="overflow-hidden group cursor-pointer hover:scale-105 transition-transform duration-200">
+                  <div className="relative mb-4">
+                    <img
+                      src={getGameImageUrl(game.appid, game.img_icon_url)}
+                      alt={game.name}
+                      className="w-full h-48 object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        // Hide image and show placeholder if header image fails
+                        target.style.display = 'none';
+                        target.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                    <div className="w-full h-48 bg-gaming-card/50 rounded-lg flex items-center justify-center hidden">
+                      <span className="text-foreground/50 text-6xl">🎮</span>
                     </div>
+                    <div className="absolute top-2 right-2 space-y-1">
+                      {game.playtime_2weeks && game.playtime_2weeks > 0 && (
+                        <Badge className="bg-gaming-primary text-white text-xs">
+                          Recently Played
+                        </Badge>
+                      )}
+                      {game.playtime_forever > 0 && (
+                        <Badge className="bg-gaming-accent text-gaming-dark text-xs">
+                          {formatPlaytime(game.playtime_forever)}
+                        </Badge>
+                      )}
+                      {game.playtime_forever === 0 && (
+                        <Badge variant="outline" className="text-xs">
+                          Never Played
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg text-foreground group-hover:text-gaming-primary transition-colors">
+                          {game.name}
+                        </h3>
+                        <p className="text-foreground/60 text-sm">Steam Game</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-4 text-sm text-foreground/70">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-4 w-4" />
+                        <span>{formatPlaytime(game.playtime_forever)}</span>
+                      </div>
+                      {game.has_community_visible_stats && (
+                        <div className="flex items-center gap-1">
+                          <Trophy className="h-4 w-4 text-gaming-accent" />
+                          <span>Achievements</span>
+                        </div>
+                      )}
+                    </div>
+
                     <Button 
-                      variant="gaming-ghost" 
-                      size="icon" 
-                      className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => window.open(`steam://nav/games/details/${game.appid}`, '_blank')}
+                      variant="gaming" 
+                      className="w-full mt-4"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent navigation when clicking the button
+                        window.open(`steam://nav/games/details/${game.appid}`, '_blank');
+                      }}
                     >
-                      <ExternalLink className="h-4 w-4" />
+                      View in Steam
                     </Button>
                   </div>
-
-                  <div className="flex items-center gap-4 text-sm text-foreground/70">
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      <span>{formatPlaytime(game.playtime_forever)}</span>
-                    </div>
-                    {game.has_community_visible_stats && (
-                      <div className="flex items-center gap-1">
-                        <Trophy className="h-4 w-4 text-gaming-accent" />
-                        <span>Achievements</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Button 
-                    variant="gaming" 
-                    className="w-full mt-4"
-                    onClick={() => window.open(`steam://nav/games/details/${game.appid}`, '_blank')}
-                  >
-                    View in Steam
-                  </Button>
-                </div>
-              </GamingCard>
+                </GamingCard>
+              </Link>
             ))
           )}
         </div>
