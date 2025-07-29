@@ -20,22 +20,34 @@ export default async function handler(req, res) {
 
     // Extract the Steam API endpoint from the request path
     // URL will be like: /api/steam/ISteamUser/GetPlayerSummaries/v0002/?steamids=123456
-    const { steam, ...params } = req.query;
+    const { steam: steamPath, ...params } = req.query;
+    
+    console.log('Full request details:');
+    console.log('- URL:', req.url);
+    console.log('- Query:', req.query);
+    console.log('- Steam path:', steamPath);
+    console.log('- Params:', params);
     
     // Handle the dynamic route parameter
     let endpoint = '';
-    if (Array.isArray(steam)) {
-      endpoint = steam.join('/');
-    } else if (typeof steam === 'string') {
-      endpoint = steam;
+    if (Array.isArray(steamPath)) {
+      endpoint = steamPath.join('/');
+    } else if (typeof steamPath === 'string') {
+      endpoint = steamPath;
     }
     
-    console.log('Raw query:', req.query);
     console.log('Extracted endpoint:', endpoint);
-    console.log('Params:', params);
     
     if (!endpoint) {
-      return res.status(400).json({ error: 'No Steam API endpoint specified' });
+      return res.status(400).json({ 
+        error: 'No Steam API endpoint specified',
+        debug: {
+          url: req.url,
+          query: req.query,
+          steamPath,
+          params
+        }
+      });
     }
 
     // Construct the full Steam API URL
