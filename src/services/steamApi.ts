@@ -60,8 +60,17 @@ export interface SteamPlayerSummary {
 export class SteamAPI {
   private static async fetchWithProxy(endpoint: string): Promise<any> {
     if (USE_PROXY) {
-      // Use your backend proxy
-      const url = `${PROXY_BASE}${endpoint}`;
+      // Use your backend proxy with query parameter format
+      // Convert /ISteamUser/GetPlayerSummaries/v0002/?steamids=123 
+      // to /api/steam?endpoint=ISteamUser/GetPlayerSummaries/v0002&steamids=123
+      const [path, queryString] = endpoint.split('?');
+      const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+      
+      let url = `${PROXY_BASE}?endpoint=${encodeURIComponent(cleanPath)}`;
+      if (queryString) {
+        url += `&${queryString}`;
+      }
+      
       console.log('Fetching Steam API via proxy:', url);
       
       const response = await fetch(url);
