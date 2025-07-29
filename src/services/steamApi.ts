@@ -116,33 +116,10 @@ export class SteamAPI {
       return data.response?.games || [];
     } catch (error) {
       console.error('Error fetching owned games:', error);
-      // Return mock data as fallback
-      return [
-        {
-          appid: 1091500,
-          name: "Cyberpunk 2077",
-          playtime_forever: 2712,
-          img_icon_url: "cyberpunk_icon",
-          img_logo_url: "cyberpunk_logo",
-          has_community_visible_stats: true
-        },
-        {
-          appid: 292030,
-          name: "The Witcher 3: Wild Hunt",
-          playtime_forever: 7230,
-          img_icon_url: "witcher3_icon",
-          img_logo_url: "witcher3_logo",
-          has_community_visible_stats: true
-        },
-        {
-          appid: 252950,
-          name: "Rocket League",
-          playtime_forever: 5358,
-          img_icon_url: "rocket_league_icon",
-          img_logo_url: "rocket_league_logo",
-          has_community_visible_stats: true
-        }
-      ];
+      
+      // Instead of returning mock data, throw the error
+      // This will prevent fallback to fake data
+      throw new Error('Failed to fetch Steam game library. Please check your Steam API configuration.');
     }
   }
 
@@ -204,44 +181,11 @@ export class SteamAPI {
       return allAchievements;
     } catch (error) {
       console.error('Error fetching all player achievements:', error);
-      // Return mock data as fallback
-      return this.getMockAchievements();
+      
+      // Instead of returning mock data, throw the error
+      // This will prevent fallback to fake data  
+      throw new Error('Failed to fetch Steam achievements. Please check your Steam API configuration.');
     }
-  }
-
-  private static getMockAchievements(): GameAchievement[] {
-    return [
-      {
-        apiname: "FIRST_STEPS",
-        achieved: 1,
-        unlocktime: 1640995200,
-        name: "First Steps",
-        description: "Complete the tutorial",
-        appid: 1091500,
-        gameName: "Cyberpunk 2077",
-        icon: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/1091500/achievement_icon.jpg"
-      },
-      {
-        apiname: "COMPLETIONIST",
-        achieved: 1,
-        unlocktime: 1641081600,
-        name: "Completionist",
-        description: "Unlock all achievements in a single game",
-        appid: 1145360,
-        gameName: "Hades",
-        icon: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/1145360/achievement_icon.jpg"
-      },
-      {
-        apiname: "SPEED_DEMON",
-        achieved: 0,
-        unlocktime: 0,
-        name: "Speed Demon",
-        description: "Complete a race in under 2 minutes",
-        appid: 252950,
-        gameName: "Rocket League",
-        iconGray: "https://steamcdn-a.akamaihd.net/steamcommunity/public/images/apps/252950/achievement_icon_gray.jpg"
-      }
-    ];
   }
 
   static async getGameSchema(appId: number): Promise<any> {
