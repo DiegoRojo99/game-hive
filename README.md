@@ -1,54 +1,72 @@
-# Welcome to your Lovable project
+# Game Hive - Steam Gaming Hub
 
-## Project info
+A modern web application that integrates with Steam to provide a personalized gaming experience. View your Steam library, track achievements, and manage your gaming profile all in one place.
 
-**URL**: https://lovable.dev/projects/ae2fde84-941a-471b-8da0-ac6c108cfe9b
+**Live Demo**: https://play-hive.vercel.app
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🎮 **Steam Authentication**: Login with your Steam account using OpenID 2.0
+- 📚 **Game Library**: View your complete Steam game collection with playtime stats
+- 🏆 **Achievement Tracking**: Browse and filter achievements across all your games
+- 🔍 **Game Filtering**: Filter games and achievements by title
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
+- ⚡ **Real-time Data**: Live integration with Steam Web API
 
-**Use Lovable**
+## Technologies Used
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ae2fde84-941a-471b-8da0-ac6c108cfe9b) and start prompting.
+- **Frontend**: Vite + React + TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Authentication**: Steam OpenID 2.0
+- **Data Fetching**: TanStack Query (React Query)
+- **API Integration**: Steam Web API
+- **Deployment**: Vercel with serverless functions
+- **State Management**: React Context API
 
-Changes made via Lovable will be committed automatically to this repo.
+## Setup & Development
 
-**Use your preferred IDE**
+### Prerequisites
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Steam Web API key - [Get your key here](https://steamcommunity.com/dev/apikey)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Local Development
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/DiegoRojo99/game-hive.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd game-hive
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Create environment file
+cp .env.example .env
+
+# Add your Steam API key to .env
+VITE_STEAM_API_KEY=your_steam_api_key_here
+
+# Start development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+For production deployment, set these environment variables:
+- `VITE_STEAM_API_KEY`: Your Steam Web API key
 
-**Use GitHub Codespaces**
+### Deployment
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The project is configured for deployment on Vercel:
+1. Connect your GitHub repository to Vercel
+2. Set the `VITE_STEAM_API_KEY` environment variable in Vercel dashboard
+3. Deploy automatically on push to main branch
+
+## API Endpoints
+
+- `/api/steam` - Steam Web API proxy (handles CORS)
+- `/api/test` - Health check and environment validation
 
 ## What technologies are used for this project?
 
