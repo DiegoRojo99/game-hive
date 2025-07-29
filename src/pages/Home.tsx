@@ -132,7 +132,7 @@ export default function Home() {
                 Connect Steam Account
               </Button>
             )}
-            <Link to="/games">
+            <Link to="/steam-library">
               <Button variant="gaming-outline" size="lg" className="text-lg px-8 py-4">
                 Explore Features
               </Button>
