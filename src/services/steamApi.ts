@@ -89,20 +89,9 @@ export class SteamAPI {
     } catch (error) {
       console.error('Error fetching player summaries:', error);
       
-      // Return mock data as fallback
-      return steamIds.map(steamId => ({
-        steamid: steamId,
-        communityvisibilitystate: 3,
-        profilestate: 1,
-        personaname: 'Steam User',
-        profileurl: `https://steamcommunity.com/profiles/${steamId}/`,
-        avatar: 'https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e.jpg',
-        avatarmedium: 'https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e_medium.jpg',
-        avatarfull: 'https://avatars.steamstatic.com/b5bd56c1aa4644a474a2e4972be27ef9e82e517e_full.jpg',
-        personastate: 1,
-        lastlogoff: Date.now() / 1000,
-        commentpermission: 1,
-      }));
+      // Instead of returning mock data, throw the error
+      // This will prevent demo user login
+      throw new Error('Failed to fetch Steam player data. Please check your Steam API configuration.');
     }
   }
 

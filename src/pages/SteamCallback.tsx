@@ -43,6 +43,13 @@ export default function SteamCallback() {
 
         const steamProfile = playerSummaries[0];
         
+        // Validate that we got real Steam data (not mock data)
+        if (steamProfile.personaname === 'Steam User' && steamProfile.steamid === steamId) {
+          console.error('Received mock/demo user data instead of real Steam profile');
+          navigate('/?error=steam_api_error');
+          return;
+        }
+        
         // Convert to our user format
         const user = {
           steamid: steamProfile.steamid,
